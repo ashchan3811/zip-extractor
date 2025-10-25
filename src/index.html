@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -8,7 +8,11 @@
     <style>
       * {
         box-sizing: border-box;
-        font-family: "Inter", system-ui, -apple-system, sans-serif;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          sans-serif;
       }
 
       body {
@@ -79,7 +83,9 @@
         font-weight: 600;
         font-size: 1rem;
         cursor: pointer;
-        transition: background 0.2s, transform 0.1s;
+        transition:
+          background 0.2s,
+          transform 0.1s;
       }
 
       button:hover {
@@ -128,13 +134,23 @@
 
       <label>Input ZIP File or Folder:</label>
       <div class="input-row">
-        <input id="inputPath" type="text" placeholder="Select ZIP or folder" />
+        <input
+          id="inputPath"
+          type="text"
+          placeholder="Select ZIP or folder"
+          disabled
+        />
         <button id="browseInput">Browse</button>
       </div>
 
       <label>Output Folder:</label>
       <div class="input-row">
-        <input id="outputDir" type="text" placeholder="Select output folder" />
+        <input
+          id="outputDir"
+          type="text"
+          placeholder="Select output folder"
+          disabled
+        />
         <button id="browseOutput">Browse</button>
       </div>
 
@@ -189,6 +205,10 @@
         } else {
           status.textContent = "❌ Extraction failed:\n" + response.error;
         }
+
+        setTimeout(() => {
+          status.textContent = "";
+        }, 10_000);
       });
     </script>
   </body>
