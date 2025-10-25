@@ -399,10 +399,6 @@
         } else {
           status.textContent = "⚠️ Extraction completed with errors:\n\n" + allLogs.join("\n");
         }
-
-        setTimeout(() => {
-          status.textContent = "";
-        }, 10_000);
       });
     </script>
   </body>
