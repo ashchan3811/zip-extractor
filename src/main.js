@@ -1,6 +1,6 @@
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const path = require("path");
-const { extractZips } = require("./extract-zips");
+const { Worker } = require("worker_threads");
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -39,19 +39,39 @@ ipcMain.handle("select-output", async () => {
 });
 
 ipcMain.handle("extract-zips", async (event, { inputPath, outputDir, keepStructure }) => {
-  try {
-    // Progress callback that sends updates to renderer
-    const progressCallback = (message) => {
-      event.sender.send("extraction-progress", message);
-    };
+  return new Promise((resolve) => {
+    // Create a worker thread to handle the extraction
+    const worker = new Worker(path.join(__dirname, "extract-worker.js"), {
+      workerData: { inputPath, outputDir, keepStructure }
+    });
 
-    const logCallback = (message) => {
-      event.sender.send("extraction-log", message);
-    };
-    
-    extractZips(inputPath, outputDir, keepStructure, progressCallback);
-    return { success: true };
-  } catch (err) {
-    return { success: false, error: err.message };
-  }
+    // Listen for messages from the worker
+    worker.on("message", (data) => {
+      if (data.type === "progress") {
+        // Send progress updates to renderer
+        event.sender.send("extraction-progress", data.message);
+      } else if (data.type === "complete") {
+        // Extraction completed
+        if (data.success) {
+          resolve({ success: true, logs: data.logs });
+        } else {
+          resolve({ success: false, error: data.error });
+        }
+        worker.terminate();
+      }
+    });
+
+    // Handle worker errors
+    worker.on("error", (error) => {
+      resolve({ success: false, error: error.message });
+      worker.terminate();
+    });
+
+    // Handle worker exit
+    worker.on("exit", (code) => {
+      if (code !== 0) {
+        resolve({ success: false, error: `Worker stopped with exit code ${code}` });
+      }
+    });
+  });
 });

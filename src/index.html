@@ -373,13 +373,6 @@
         status.scrollTop = status.scrollHeight;
       });
 
-      // Listen for extraction logs
-      ipcRenderer.on("extraction-log", (_, message) => {
-        status.textContent += message + "\n";
-        // Auto-scroll to bottom
-        status.scrollTop = status.scrollHeight;
-      });
-
       extractBtn.addEventListener("click", async () => {
         if (selectedInputPaths.length === 0 || !outputDir.value) {
           status.textContent = "⚠️ Please select both input and output paths.";
