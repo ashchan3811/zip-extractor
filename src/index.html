@@ -366,13 +366,31 @@
         if (result) outputDir.value = result;
       });
 
+      // Listen for real-time progress updates
+      ipcRenderer.on("extraction-progress", (_, message) => {
+        status.textContent += message + "\n";
+        // Auto-scroll to bottom
+        status.scrollTop = status.scrollHeight;
+      });
+
+      // Listen for extraction logs
+      ipcRenderer.on("extraction-log", (_, message) => {
+        status.textContent += message + "\n";
+        // Auto-scroll to bottom
+        status.scrollTop = status.scrollHeight;
+      });
+
       extractBtn.addEventListener("click", async () => {
         if (selectedInputPaths.length === 0 || !outputDir.value) {
           status.textContent = "⚠️ Please select both input and output paths.";
           return;
         }
 
-        status.textContent = "⏳ Extracting... Please wait.";
+        // Clear previous status and disable button
+        status.textContent = "⏳ Starting extraction... Please wait.\n";
+        extractBtn.disabled = true;
+        extractBtn.style.opacity = "0.6";
+        extractBtn.style.cursor = "not-allowed";
 
         // Process each selected path
         const allLogs = [];
@@ -393,11 +411,16 @@
           }
         }
 
+        // Re-enable button
+        extractBtn.disabled = false;
+        extractBtn.style.opacity = "1";
+        extractBtn.style.cursor = "pointer";
+
         if (!hasError) {
-          status.textContent =
-            "✅ Extraction complete!\n\n" + allLogs.join("\n");
+          status.textContent +=
+            "\n✅ Extraction complete!\n";
         } else {
-          status.textContent = "⚠️ Extraction completed with errors:\n\n" + allLogs.join("\n");
+          status.textContent += "\n⚠️ Extraction completed with errors.\n";
         }
       });
     </script>

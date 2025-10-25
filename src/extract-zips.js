@@ -7,14 +7,16 @@ const AdmZip = require("adm-zip");
  * @param {string} inputPath 
  * @param {string} outputBaseDir 
  * @param {boolean} keepStructure 
+ * @param {Function} progressCallback - Called with progress updates
  * @returns {string[]}
  */
-async function extractZips(inputPath, outputBaseDir, keepStructure = false) {
+async function extractZips(inputPath, outputBaseDir, keepStructure = false, progressCallback = null) {
   const logs = [];
 
   if (!fs.existsSync(outputBaseDir)) {
     fs.mkdirSync(outputBaseDir, { recursive: true });
     logs.push(`📁 Created output directory: "${outputBaseDir}"`);
+    if (progressCallback) progressCallback(`📁 Created output directory: "${outputBaseDir}"`);
   }
 
   function ensureDir(filePath) {
@@ -24,11 +26,22 @@ async function extractZips(inputPath, outputBaseDir, keepStructure = false) {
     }
   }
 
-  function extractZip(zipFilePath) {
+  // Helper to yield control back to event loop
+  function yieldToEventLoop() {
+    return new Promise(resolve => setImmediate(resolve));
+  }
+
+  async function extractZip(zipFilePath) {
     try {
       const zip = new AdmZip(zipFilePath);
       const entries = zip.getEntries();
+      const zipBaseName = path.basename(zipFilePath);
 
+      if (progressCallback) {
+        progressCallback(`⏳ Extracting "${zipBaseName}"...`);
+      }
+
+      let fileCount = 0;
       for (const entry of entries) {
         if (entry.isDirectory) continue;
 
@@ -43,23 +56,45 @@ async function extractZips(inputPath, outputBaseDir, keepStructure = false) {
 
         ensureDir(targetPath);
         fs.writeFileSync(targetPath, entry.getData());
-        logs.push(`✅ Extracted file: ${entry.entryName}`);
+        
+        const logMessage = `✅ Extracted file: ${entry.entryName}`;
+        logs.push(logMessage);
+        fileCount++;
+
+        // Yield control every 5 files to keep UI responsive
+        if (fileCount % 5 === 0) {
+          if (progressCallback) {
+            progressCallback(logMessage);
+          }
+          await yieldToEventLoop();
+        }
       }
 
-      logs.push(`✅ Extracted "${path.basename(zipFilePath)}"`);
+      const successMessage = `✅ Extracted "${zipBaseName}" (${fileCount} files)`;
+      logs.push(successMessage);
+      if (progressCallback) progressCallback(successMessage);
     } catch (err) {
-      logs.push(`❌ Failed to extract "${zipFilePath}": ${err.message}`);
+      const errorMessage = `❌ Failed to extract "${zipFilePath}": ${err.message}`;
+      logs.push(errorMessage);
+      if (progressCallback) progressCallback(errorMessage);
     }
   }
 
   const stats = fs.statSync(inputPath);
 
   if (stats.isFile() && inputPath.endsWith(".zip")) {
-    extractZip(inputPath);
+    await extractZip(inputPath);
   } else if (stats.isDirectory()) {
     const files = fs.readdirSync(inputPath).filter((f) => f.endsWith(".zip"));
+    
+    if (progressCallback) {
+      progressCallback(`📦 Found ${files.length} ZIP files to extract`);
+    }
+    
     for (const file of files) {
-      extractZip(path.join(inputPath, file));
+      await extractZip(path.join(inputPath, file));
+      // Yield between ZIP files
+      await yieldToEventLoop();
     }
   } else {
     throw new Error("Invalid path — must be a zip file or folder containing zips.");

@@ -38,10 +38,19 @@ ipcMain.handle("select-output", async () => {
   return result.canceled ? null : result.filePaths[0];
 });
 
-ipcMain.handle("extract-zips", async (_, { inputPath, outputDir, keepStructure }) => {
+ipcMain.handle("extract-zips", async (event, { inputPath, outputDir, keepStructure }) => {
   try {
-    const logs = await extractZips(inputPath, outputDir, keepStructure);
-    return { success: true, logs };
+    // Progress callback that sends updates to renderer
+    const progressCallback = (message) => {
+      event.sender.send("extraction-progress", message);
+    };
+
+    const logCallback = (message) => {
+      event.sender.send("extraction-log", message);
+    };
+    
+    extractZips(inputPath, outputDir, keepStructure, progressCallback);
+    return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
   }
