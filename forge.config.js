@@ -4,7 +4,7 @@ const { FuseV1Options, FuseVersion } = require('@electron/fuses');
 module.exports = {
   packagerConfig: {
     asar: true,
-    icon: './assets/icon', // Optional: add icon later
+    icon: './assets/icons/icon', // Electron Forge automatically adds .ico/.icns based on platform
     name: 'ZIP Extractor',
     executableName: 'zip-extractor',
   },
@@ -17,7 +17,7 @@ module.exports = {
         name: 'zip_extractor',
         authors: 'Ashwani Kumar',
         description: 'Extract ZIP files easily using a desktop app',
-        setupIcon: './assets/icon.ico', // Optional: add icon later
+        setupIcon: './assets/icons/icon.ico',
         loadingGif: './assets/install-spinner.gif', // Optional
       },
       platforms: ['win32'],

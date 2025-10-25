@@ -52,10 +52,15 @@ npm run make:win
 | `npm run make:mac` | Build macOS app |
 | `npm run make:linux` | Build Linux app |
 | `npm run package:win` | Package only (no ZIP) |
+| `npm run generate-icons` | Generate icons from source PNG |
 
 ## Need More Info?
 
-See [BUILD_GUIDE.md](./BUILD_GUIDE.md) for:
+See detailed guides:
+- [BUILD_GUIDE.md](./BUILD_GUIDE.md) - Building for all platforms
+- [ICON_GUIDE.md](./ICON_GUIDE.md) - Creating and generating icons
+
+For more details on:
 - Detailed build instructions
 - Creating Windows installers
 - Troubleshooting

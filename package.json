@@ -29,7 +29,8 @@
     "make:mac": "electron-forge make --platform=darwin",
     "make:linux": "electron-forge make --platform=linux",
     "package:win": "electron-forge package --platform=win32 --arch=x64",
-    "package:mac": "electron-forge package --platform=darwin"
+    "package:mac": "electron-forge package --platform=darwin",
+    "generate-icons": "electron-icon-builder --input=./assets/icon-source.png --output=./assets --flatten"
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
@@ -46,6 +47,8 @@
     "@electron-forge/plugin-fuses": "^7.10.2",
     "@electron/fuses": "^1.8.0",
     "electron": "^32.0.0",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "electron-icon-builder": "^2.0.1",
+    "icon-gen": "^5.0.0"
   }
 }
