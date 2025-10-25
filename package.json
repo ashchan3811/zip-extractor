@@ -22,7 +22,14 @@
     "start": "electron-forge start",
     "build": "electron-builder",
     "package": "electron-forge package",
-    "make": "electron-forge make"
+    "make": "electron-forge make",
+    "make:win": "electron-forge make --platform=win32 --arch=x64 --targets=@electron-forge/maker-zip",
+    "make:win-arm": "electron-forge make --platform=win32 --arch=arm64 --targets=@electron-forge/maker-zip",
+    "make:win-installer": "electron-forge make --platform=win32 --arch=x64",
+    "make:mac": "electron-forge make --platform=darwin",
+    "make:linux": "electron-forge make --platform=linux",
+    "package:win": "electron-forge package --platform=win32 --arch=x64",
+    "package:mac": "electron-forge package --platform=darwin"
   },
   "dependencies": {
     "adm-zip": "^0.5.10",
@@ -33,6 +40,7 @@
     "@electron-forge/maker-deb": "^7.10.2",
     "@electron-forge/maker-rpm": "^7.10.2",
     "@electron-forge/maker-squirrel": "^7.10.2",
+    "@electron-forge/maker-wix": "^7.10.2",
     "@electron-forge/maker-zip": "^7.10.2",
     "@electron-forge/plugin-auto-unpack-natives": "^7.10.2",
     "@electron-forge/plugin-fuses": "^7.10.2",
