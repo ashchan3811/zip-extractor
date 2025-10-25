@@ -2,190 +2,233 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ZIP Extractor</title>
-    <style>
-      :root {
-        --accent: #007aff;
-        --bg: #f5f7fa;
-        --card-bg: rgba(255, 255, 255, 0.85);
-        --border: rgba(0, 0, 0, 0.1);
-      }
 
+    <style>
       * {
         box-sizing: border-box;
+        font-family: "Inter", system-ui, -apple-system, sans-serif;
       }
 
       body {
-        font-family: "Inter", sans-serif;
-        background: var(--bg);
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         margin: 0;
+        padding: 2rem;
+        background-color: #f8fafc;
+        color: #1e293b;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
       }
 
       .card {
-        width: 500px;
-        padding: 30px;
-        background: var(--card-bg);
-        backdrop-filter: blur(12px);
-        border-radius: 20px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-        border: 1px solid var(--border);
-        text-align: center;
-        transition: all 0.3s ease;
+        background: white;
+        width: 100%;
+        border-radius: 16px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 2rem;
+        transition: box-shadow 0.2s ease-in-out;
+      }
+
+      .card:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
       }
 
       h1 {
         font-size: 1.8rem;
-        color: #222;
-        margin-bottom: 20px;
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        color: #0f172a;
+      }
+
+      label {
+        display: block;
+        font-weight: 500;
+        margin-top: 1rem;
+        margin-bottom: 0.5rem;
+        color: #334155;
+      }
+
+      .input-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      input[type="text"] {
+        width: calc(100% - 130px);
+        padding: 0.8rem;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.2s;
+      }
+
+      input[type="text"]:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
       }
 
       button {
-        background: var(--accent);
-        color: white;
+        padding: 0.8rem 1.2rem;
         border: none;
-        border-radius: 10px;
-        padding: 10px 18px;
-        font-size: 15px;
+        border-radius: 8px;
+        background-color: #2563eb;
+        color: white;
+        font-weight: 600;
+        font-size: 1rem;
         cursor: pointer;
-        margin: 8px 4px;
-        transition: all 0.2s ease;
+        transition: background 0.2s, transform 0.1s;
       }
 
       button:hover {
-        background: #0061cc;
+        background-color: #1d4ed8;
       }
 
-      .path-label {
-        display: block;
-        margin-top: 6px;
-        font-size: 13px;
-        color: #444;
-        font-weight: 500;
+      button:active {
+        transform: scale(0.98);
       }
 
-      #extract {
-        margin-top: 20px;
-        background: linear-gradient(135deg, #007aff, #00c6ff);
-        font-weight: bold;
-        padding: 12px 24px;
+      #extractBtn {
+        margin-top: 2rem;
+        width: 100%;
+        font-size: 1.1rem;
       }
 
-      #extract:hover {
-        transform: scale(1.03);
-      }
-
-      #log {
-        background: #1a1a1a;
-        color: #0f0;
-        text-align: left;
-        border-radius: 10px;
-        padding: 15px;
-        height: 200px;
+      #status {
+        margin-top: 1.5rem;
+        font-size: 0.95rem;
+        color: #334155;
+        white-space: pre-line;
+        max-height: 300px;
         overflow-y: auto;
-        font-family: "Courier New", monospace;
-        margin-top: 20px;
-        font-size: 13px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 1rem;
       }
 
-      .progress-bar {
-        height: 6px;
-        background: #ddd;
-        border-radius: 10px;
-        overflow: hidden;
-        margin-top: 15px;
+      .drop-zone {
+        margin-top: 1.5rem;
+        border: 2px dashed #94a3b8;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        color: #64748b;
+        transition: border-color 0.2s, background 0.2s;
       }
 
-      .progress-bar-inner {
-        width: 0%;
-        height: 100%;
-        background: var(--accent);
-        transition: width 0.3s ease;
+      .drop-zone.dragover {
+        border-color: #2563eb;
+        background: #eff6ff;
+        color: #2563eb;
+      }
+
+      .options {
+        margin-top: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .options label {
+        margin: 0;
+        font-size: 0.95rem;
       }
     </style>
   </head>
+
   <body>
     <div class="card">
       <h1>📦 ZIP Extractor</h1>
 
-      <div>
-        <button id="select-input">Select ZIP or Folder</button>
-        <span class="path-label" id="input-path">No input selected</span>
+      <label>Input ZIP File or Folder:</label>
+      <div class="input-row">
+        <input id="inputPath" type="text" placeholder="Select or drop zip/folder" />
+        <button id="browseInput">Browse</button>
       </div>
 
-      <div>
-        <button id="select-output">Select Output Folder</button>
-        <span class="path-label" id="output-path">No output selected</span>
+      <label>Output Folder:</label>
+      <div class="input-row">
+        <input id="outputDir" type="text" placeholder="Select output folder" />
+        <button id="browseOutput">Browse</button>
       </div>
 
-      <div class="progress-bar">
-        <div class="progress-bar-inner" id="progress-bar"></div>
+      <div class="options">
+        <input type="checkbox" id="keepStructure" />
+        <label for="keepStructure">Keep original folder structure</label>
       </div>
 
-      <button id="extract">Extract Files</button>
+      <div class="drop-zone" id="dropZone">
+        Drag & Drop ZIP files or folders here
+      </div>
 
-      <pre id="log"></pre>
+      <button id="extractBtn">Extract ZIPs</button>
+
+      <div id="status"></div>
     </div>
 
     <script>
-      const inputBtn = document.getElementById("select-input");
-      const outputBtn = document.getElementById("select-output");
-      const extractBtn = document.getElementById("extract");
-      const logEl = document.getElementById("log");
-      const progressBar = document.getElementById("progress-bar");
+      const { ipcRenderer } = require("electron");
 
-      let inputPath = "";
-      let outputPath = "";
+      const inputPath = document.getElementById("inputPath");
+      const outputDir = document.getElementById("outputDir");
+      const browseInput = document.getElementById("browseInput");
+      const browseOutput = document.getElementById("browseOutput");
+      const extractBtn = document.getElementById("extractBtn");
+      const status = document.getElementById("status");
+      const dropZone = document.getElementById("dropZone");
+      const keepStructure = document.getElementById("keepStructure");
 
-      function log(message) {
-        logEl.textContent += message + "\n";
-        logEl.scrollTop = logEl.scrollHeight;
-      }
+      browseInput.addEventListener("click", async () => {
+        const result = await ipcRenderer.invoke("select-input");
+        if (result) inputPath.value = result;
+      });
 
-      inputBtn.onclick = async () => {
-        inputPath = await window.electronAPI.selectFolder("input");
-        document.getElementById("input-path").textContent =
-          inputPath || "No input selected";
-      };
+      browseOutput.addEventListener("click", async () => {
+        const result = await ipcRenderer.invoke("select-output");
+        if (result) outputDir.value = result;
+      });
 
-      outputBtn.onclick = async () => {
-        outputPath = await window.electronAPI.selectFolder("output");
-        document.getElementById("output-path").textContent =
-          outputPath || "No output selected";
-      };
+      dropZone.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        dropZone.classList.add("dragover");
+      });
 
-      extractBtn.onclick = async () => {
-        if (!inputPath || !outputPath) {
-          log("⚠️ Please select both input and output paths.");
+      dropZone.addEventListener("dragleave", () => {
+        dropZone.classList.remove("dragover");
+      });
+
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("dragover");
+
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          inputPath.value = files[0].path;
+        }
+      });
+
+      extractBtn.addEventListener("click", async () => {
+        if (!inputPath.value || !outputDir.value) {
+          status.textContent = "⚠️ Please select both input and output paths.";
           return;
         }
 
-        logEl.textContent = "";
-        progressBar.style.width = "0%";
-        log("⏳ Extracting files...");
+        status.textContent = "⏳ Extracting... Please wait.";
 
-        const result = await window.electronAPI.extractZips({
-          inputPath,
-          outputPath,
+        const response = await ipcRenderer.invoke("extract-zips", {
+          inputPath: inputPath.value,
+          outputDir: outputDir.value,
+          keepStructure: keepStructure.checked,
         });
 
-        if (result.success) {
-          const logs = result.logs;
-          logs.forEach((entry, i) => {
-            setTimeout(() => {
-              log(entry);
-              const percent = ((i + 1) / logs.length) * 100;
-              progressBar.style.width = percent + "%";
-            }, i * 150);
-          });
+        if (response.success) {
+          status.textContent = "✅ Extraction complete!\n\n" + response.logs.join("\n");
         } else {
-          log("❌ Error: " + result.error);
-          progressBar.style.background = "red";
+          status.textContent = "❌ Extraction failed:\n" + response.error;
         }
-      };
+      });
     </script>
   </body>
 </html>
