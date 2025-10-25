@@ -19,11 +19,15 @@ app.whenReady().then(() => {
   createWindow();
 });
 
-ipcMain.handle("select-input", async () => {
-  const result = await dialog.showOpenDialog({
-    properties: ["openFile", "openDirectory", "multiSelections"],
-    filters: [{ name: "ZIP Files", extensions: ["zip"] }],
-  });
+ipcMain.handle("select-input", async (_, selectFolders) => {
+  const options = {
+    properties: selectFolders 
+      ? ["openDirectory", "multiSelections"]
+      : ["openFile", "multiSelections"],
+    filters: selectFolders ? [] : [{ name: "ZIP Files", extensions: ["zip"] }],
+  };
+  
+  const result = await dialog.showOpenDialog(options);
   return result.canceled ? null : result.filePaths;
 });
 

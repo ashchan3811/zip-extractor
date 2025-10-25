@@ -238,12 +238,20 @@
     <div class="card">
       <h1>📦 ZIP Extractor</h1>
 
-      <label>Input ZIP File(s) or Folder:</label>
+      <div class="options">
+        <label class="toggle-switch">
+          <input type="checkbox" id="fileOrFolder" />
+          <span class="toggle-slider"></span>
+        </label>
+        <label for="fileOrFolder">Files or Folders</label>
+      </div>
+
+      <label for="inputPath">Input ZIP Files</label>
       <div class="input-row">
         <input
           id="inputPath"
           type="text"
-          placeholder="Select ZIP file(s) or folder"
+          placeholder="Select ZIP file(s)"
           disabled
         />
         <button id="browseInput">Browse</button>
@@ -253,7 +261,7 @@
         <div id="selectedItemsList"></div>
       </div>
 
-      <label>Output Folder:</label>
+      <label for="outputDir">Output Folder:</label>
       <div class="input-row">
         <input
           id="outputDir"
@@ -281,6 +289,7 @@
       const { ipcRenderer } = require("electron");
 
       const inputPath = document.getElementById("inputPath");
+      const inputPathLabel = document.querySelector("label[for='inputPath']");
       const outputDir = document.getElementById("outputDir");
       const browseInput = document.getElementById("browseInput");
       const browseOutput = document.getElementById("browseOutput");
@@ -289,6 +298,17 @@
       const keepStructure = document.getElementById("keepStructure");
       const selectedItemsContainer = document.getElementById("selectedItemsContainer");
       const selectedItemsList = document.getElementById("selectedItemsList");
+      const fileOrFolderInput = document.getElementById('fileOrFolder');
+
+      fileOrFolderInput.addEventListener('change', (event) => {
+        if (event.target.checked) {
+          inputPath.placeholder = "Select ZIP folder(s)";
+          inputPathLabel.textContent = "Input ZIP Folder(s)";
+        } else {
+          inputPath.placeholder = "Select ZIP file(s)";
+          inputPathLabel.textContent = "Input ZIP File(s)";
+        }
+      });
 
       let selectedInputPaths = [];
 
@@ -334,7 +354,7 @@
       }
 
       browseInput.addEventListener("click", async () => {
-        const result = await ipcRenderer.invoke("select-input");
+        const result = await ipcRenderer.invoke("select-input", fileOrFolderInput.checked);
         if (result) {
           selectedInputPaths = result;
           updateSelectedItemsDisplay();
