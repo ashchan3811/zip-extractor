@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ZIP Extractor</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+      }
+      button {
+        padding: 8px 16px;
+        margin: 6px;
+      }
+      #log {
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        padding: 10px;
+        height: 200px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>ZIP Extractor</h2>
+
+    <div>
+      <button id="select-input">Select ZIP or Folder</button>
+      <span id="input-path"></span>
+    </div>
+    <div>
+      <button id="select-output">Select Output Folder</button>
+      <span id="output-path"></span>
+    </div>
+
+    <div>
+      <button id="extract">Extract</button>
+    </div>
+
+    <pre id="log"></pre>
+
+    <script>
+      const inputBtn = document.getElementById("select-input");
+      const outputBtn = document.getElementById("select-output");
+      const extractBtn = document.getElementById("extract");
+      const logEl = document.getElementById("log");
+
+      let inputPath = "";
+      let outputPath = "";
+
+      inputBtn.onclick = async () => {
+        inputPath = await window.electronAPI.selectFolder("input");
+        document.getElementById("input-path").innerText = inputPath || "";
+      };
+
+      outputBtn.onclick = async () => {
+        outputPath = await window.electronAPI.selectFolder("output");
+        document.getElementById("output-path").innerText = outputPath || "";
+      };
+
+      extractBtn.onclick = async () => {
+        if (!inputPath || !outputPath) {
+          logEl.textContent = "⚠️ Please select both input and output paths.";
+          return;
+        }
+
+        logEl.textContent = "⏳ Extracting...\n";
+
+        const result = await window.electronAPI.extractZips({ inputPath, outputPath });
+        if (result.success) {
+          logEl.textContent += result.logs.join("\n");
+        } else {
+          logEl.textContent += "❌ Error: " + result.error;
+        }
+      };
+    </script>
+  </body>
+</html>

@@ -1,17 +1,15 @@
 {
-  "name": "extract-zip",
+  "name": "zip-extractor",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "extract-zip": "node extract-zips.js"
-  },
-  "keywords": [],
-  "author": "",
+  "main": "src/main.js",
+  "description": "Extract ZIP files easily using a desktop app",
+  "author": "Ashwani Kumar",
   "license": "ISC",
+  "scripts": {
+    "start": "electron ."
+  },
   "dependencies": {
-    "adm-zip": "^0.5.16",
-    "unzipper": "^0.12.3"
+    "adm-zip": "^0.5.10",
+    "electron": "^32.0.0"
   }
 }
