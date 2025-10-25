@@ -7,22 +7,37 @@ This guide explains how to build Windows executables from macOS.
 - Node.js and npm installed
 - All dependencies installed (`npm install`)
 
-## Build Commands
+## Quick Start - Build Windows Executable from Mac
 
-### Build Windows Executable (from Mac)
-
-To create a Windows executable (.exe) from your Mac:
+The easiest way to build for Windows from Mac:
 
 ```bash
 npm run make:win
 ```
 
-This will:
-- Package your app for Windows (win32)
-- Create a Windows installer using Squirrel
-- Output files to the `out/` directory
+✅ **This works without any additional tools!**
 
-### Build for Other Platforms
+The output will be at:
+```
+out/make/zip/win32/x64/ZIP Extractor-win32-x64-1.0.0.zip
+```
+
+## All Build Commands
+
+### Windows Builds (from Mac)
+
+```bash
+# Build Windows x64 (most common) - Creates ZIP
+npm run make:win
+
+# Build Windows ARM64 - Creates ZIP  
+npm run make:win-arm
+
+# Build Windows installer (requires Wine & Mono on Mac)
+npm run make:win-installer
+```
+
+### Other Platforms
 
 ```bash
 # Build for macOS
@@ -35,154 +50,269 @@ npm run make:linux
 npm run make
 ```
 
-### Package Only (No Installer)
-
-If you only want to package without creating an installer:
+### Package Only (No Distribution Archive)
 
 ```bash
-# Package for Windows
+# Package for Windows (no ZIP)
 npm run package:win
 
-# Package for macOS
+# Package for macOS (no ZIP)
 npm run package:mac
 ```
 
-## Output Location
+## Output Files
 
-All built files will be in the `out/` directory:
+After running `npm run make:win`, you'll find:
+
+### Windows Distribution
+**Location**: `out/make/zip/win32/x64/ZIP Extractor-win32-x64-1.0.0.zip`
+- **Size**: ~108 MB
+- **Architecture**: x64 (Intel/AMD processors)
+- **Format**: Portable ZIP archive
+
+### Packaged App (Unzipped)
+**Location**: `out/ZIP Extractor-win32-x64/`
+- Contains `zip-extractor.exe` and all dependencies
+- This is what's inside the ZIP file
+
+## How to Distribute
+
+### Method 1: ZIP File (Recommended for Mac → Windows builds)
+
+1. Share the ZIP file: `ZIP Extractor-win32-x64-1.0.0.zip`
+2. Users extract the ZIP
+3. Users run `zip-extractor.exe` inside
+4. No installation required!
+
+**Pros:**
+- ✅ Works cross-platform (build from Mac)
+- ✅ No installer needed
+- ✅ Portable - can run from USB drive
+- ✅ No admin rights required
+
+**Cons:**
+- ❌ Users must extract manually
+- ❌ No Start Menu shortcuts
+- ❌ No auto-updates
+
+### Method 2: Windows Installer (Requires Wine/Mono on Mac)
+
+To create a Windows installer from Mac:
+
+1. **Install Wine and Mono** (one-time setup):
+   ```bash
+   # Using Homebrew
+   brew install --cask wine-stable
+   brew install mono
+   ```
+
+2. **Build installer**:
+   ```bash
+   npm run make:win-installer
+   ```
+
+3. **Output location**:
+   ```
+   out/make/squirrel.windows/x64/zip-extractor-1.0.0 Setup.exe
+   ```
+
+**Pros:**
+- ✅ Professional installer experience
+- ✅ Start Menu shortcuts
+- ✅ Uninstaller included
+- ✅ Desktop icons
+
+**Cons:**
+- ❌ Requires Wine/Mono setup on Mac
+- ❌ Slower build process
+- ❌ More complex troubleshooting
+
+## Testing Your Build
+
+### On Windows:
+
+1. Transfer the ZIP file to a Windows PC
+2. Extract it
+3. Run `zip-extractor.exe`
+4. Test all features
+
+### File Size
+
+- **Typical size**: 100-120 MB
+- **Why so large?**: Includes Chromium and Node.js
+- **This is normal** for Electron apps
+
+## Architecture Support
+
+### x64 (Intel/AMD) - Default
+- Most common Windows PCs
+- Intel and AMD processors
+- Built with: `npm run make:win`
+
+### ARM64 (ARM processors)
+- Surface Pro X, other ARM Windows devices
+- Built with: `npm run make:win-arm`
+
+## Project Structure After Build
 
 ```
-out/
-├── make/
-│   ├── squirrel.windows/
-│   │   └── x64/
-│   │       ├── zip-extractor-1.0.0 Setup.exe  ← Windows Installer
-│   │       └── RELEASES
-│   └── zip/
-│       └── win32/
-│           └── zip-extractor-win32-x64-1.0.0.zip
-└── zip-extractor-win32-x64/  ← Packaged app
+zip-extractor/
+├── out/
+│   ├── ZIP Extractor-win32-x64/      ← Packaged app (extracted)
+│   │   ├── zip-extractor.exe         ← Main executable
+│   │   ├── resources/                ← App resources
+│   │   └── ...
+│   └── make/
+│       ├── zip/
+│       │   └── win32/
+│       │       └── x64/
+│       │           └── ZIP Extractor-win32-x64-1.0.0.zip  ← DISTRIBUTE THIS
+│       └── squirrel.windows/         ← Only if using installer
+│           └── x64/
+│               └── zip-extractor-1.0.0 Setup.exe
+├── src/
+├── package.json
+└── ...
 ```
 
-## Installation Files
+## Clean Builds
 
-### Windows
-- **Installer**: `out/make/squirrel.windows/x64/zip-extractor-1.0.0 Setup.exe`
-- **Portable ZIP**: `out/make/zip/win32/zip-extractor-win32-x64-1.0.0.zip`
+To start fresh:
 
-### macOS
-- **ZIP**: `out/make/zip-extractor-darwin-x64-1.0.0.zip`
+```bash
+# Remove output directory
+rm -rf out/
 
-## Cross-Platform Building
-
-### Building Windows from Mac ✅
-- **Works**: Yes, fully supported
-- **Requirements**: None additional
-- **Output**: Windows .exe installer
-
-### Building Mac from Windows ❌
-- **Works**: No, requires macOS
-- **Why**: Code signing and app bundling require macOS
-
-### Building Linux from Mac/Windows ⚠️
-- **Works**: Partially
-- **Limitations**: Some Linux-specific tools may not work perfectly
-
-## Testing the Build
-
-After building for Windows:
-
-1. **Transfer to Windows PC**: Copy the `.exe` file to a Windows machine
-2. **Test Installation**: Run the installer
-3. **Test Functionality**: Verify all features work correctly
+# Rebuild
+npm run make:win
+```
 
 ## Troubleshooting
 
-### Error: "Cannot build for win32 on darwin"
-**Solution**: This shouldn't happen with Electron Forge. Ensure you're using the correct commands.
-
 ### Error: "Cannot find module"
-**Solution**: Run `npm install` to ensure all dependencies are installed.
+**Solution**: Run `npm install`
 
-### Build takes a long time
-**Reason**: Cross-platform builds need to download platform-specific binaries.
-**Solution**: First build will be slow, subsequent builds are faster.
+### Error: "EACCES: permission denied"
+**Solution**: Check file permissions or run without sudo
 
-### Output files are very large
-**Reason**: Electron bundles Chromium and Node.js.
-**Solution**: This is normal. Typical size is 80-150MB.
+### Build is slow
+**Normal**: First build downloads ~100MB of Electron binaries
+**Subsequent builds**: Much faster due to caching
 
-## Optimizing Builds
+### ZIP file won't open on Windows
+**Solution**: Use 7-Zip or WinRAR if Windows built-in extractor fails
 
-### Reduce Build Size
+### .exe won't run on Windows
+**Common causes**:
+1. **Windows Defender blocking**: Right-click → "Run anyway"
+2. **Missing Visual C++ Runtime**: Windows usually auto-installs
+3. **32-bit vs 64-bit**: Make sure using x64 build for 64-bit Windows
 
-1. **Remove unused dependencies**: Check `package.json`
-2. **Use asar**: Already enabled in config
-3. **Exclude dev dependencies**: Already configured
+## Advanced: Custom Icons
 
-### Speed Up Builds
+To add a custom app icon:
 
-1. **Cache**: Electron Forge caches downloads
-2. **Target specific architecture**: Add `--arch=x64` flag
-3. **Skip unused platforms**: Use platform-specific commands
+1. Create `assets/` folder:
+   ```bash
+   mkdir assets
+   ```
 
-## Icons (Optional)
-
-To add custom icons:
-
-1. Create `assets/` folder in project root
 2. Add icons:
-   - `icon.ico` for Windows (256x256)
-   - `icon.icns` for macOS
-   - `icon.png` for Linux (512x512)
-3. Rebuild the app
+   - `icon.ico` - Windows (256x256 or multiple sizes)
+   - `icon.icns` - macOS
+   - `icon.png` - Linux (512x512)
 
-## CI/CD Integration
+3. Update `forge.config.js` to uncomment icon paths
 
-For automated builds, use GitHub Actions:
-
-```yaml
-# .github/workflows/build.yml
-name: Build
-on: [push]
-jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-      - run: npm install
-      - run: npm run make:win
-      - uses: actions/upload-artifact@v3
-        with:
-          name: windows-installer
-          path: out/make/squirrel.windows/x64/*.exe
-```
-
-## Distribution
-
-### Windows
-- Share the `.exe` installer file
-- Users download and run it
-- App installs to `%LOCALAPPDATA%/zip-extractor/`
-
-### macOS
-- Share the `.zip` file
-- Users extract and drag to Applications
-- May need to allow app in System Preferences > Security
+4. Rebuild
 
 ## Version Updates
 
 To release a new version:
 
-1. Update version in `package.json`
-2. Run build command
-3. New version number appears in filename
-4. Distribute new installer
+1. Edit `package.json`:
+   ```json
+   "version": "1.0.1"
+   ```
 
-## Support
+2. Rebuild:
+   ```bash
+   npm run make:win
+   ```
 
-For issues with building, check:
-- [Electron Forge Documentation](https://www.electronforge.io/)
-- [Electron Documentation](https://www.electronjs.org/)
+3. New file will be:
+   ```
+   ZIP Extractor-win32-x64-1.0.1.zip
+   ```
+
+## CI/CD (GitHub Actions)
+
+For automated builds on every commit:
+
+Create `.github/workflows/build.yml`:
+
+```yaml
+name: Build Windows App
+
+on:
+  push:
+    branches: [ main, build-electron ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Build Windows app
+        run: npm run make:win
+      
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-build
+          path: out/make/zip/win32/x64/*.zip
+```
+
+This automatically builds on Windows runners (no Wine needed).
+
+## Performance Tips
+
+### Faster Builds
+- Use `--arch=x64` instead of building all architectures
+- Use `--targets=@electron-forge/maker-zip` instead of all makers
+- Clear `out/` folder between major changes
+
+### Smaller Builds
+- Remove unused dependencies
+- Use `asar` packaging (already enabled)
+- Don't bundle devDependencies (already configured)
+
+## Support Resources
+
+- **Electron Forge Docs**: https://www.electronforge.io/
+- **Electron Docs**: https://www.electronjs.org/docs
+- **This Project**: Check README.md for app-specific info
+
+## Summary
+
+**Recommended workflow from Mac**:
+
+1. Run: `npm run make:win`
+2. Find: `out/make/zip/win32/x64/ZIP Extractor-win32-x64-1.0.0.zip`
+3. Share with Windows users
+4. They extract and run `zip-extractor.exe`
+
+✅ **Works perfectly without Wine or additional tools!**
 
