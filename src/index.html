@@ -4,74 +4,186 @@
     <meta charset="UTF-8" />
     <title>ZIP Extractor</title>
     <style>
+      :root {
+        --accent: #007aff;
+        --bg: #f5f7fa;
+        --card-bg: rgba(255, 255, 255, 0.85);
+        --border: rgba(0, 0, 0, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: sans-serif;
-        padding: 20px;
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
       }
+
+      .card {
+        width: 500px;
+        padding: 30px;
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        border-radius: 20px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border);
+        text-align: center;
+        transition: all 0.3s ease;
+      }
+
+      h1 {
+        font-size: 1.8rem;
+        color: #222;
+        margin-bottom: 20px;
+      }
+
       button {
-        padding: 8px 16px;
-        margin: 6px;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 10px 18px;
+        font-size: 15px;
+        cursor: pointer;
+        margin: 8px 4px;
+        transition: all 0.2s ease;
       }
+
+      button:hover {
+        background: #0061cc;
+      }
+
+      .path-label {
+        display: block;
+        margin-top: 6px;
+        font-size: 13px;
+        color: #444;
+        font-weight: 500;
+      }
+
+      #extract {
+        margin-top: 20px;
+        background: linear-gradient(135deg, #007aff, #00c6ff);
+        font-weight: bold;
+        padding: 12px 24px;
+      }
+
+      #extract:hover {
+        transform: scale(1.03);
+      }
+
       #log {
-        background: #f5f5f5;
-        border: 1px solid #ddd;
-        padding: 10px;
+        background: #1a1a1a;
+        color: #0f0;
+        text-align: left;
+        border-radius: 10px;
+        padding: 15px;
         height: 200px;
         overflow-y: auto;
-        white-space: pre-wrap;
+        font-family: "Courier New", monospace;
+        margin-top: 20px;
+        font-size: 13px;
+      }
+
+      .progress-bar {
+        height: 6px;
+        background: #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-top: 15px;
+      }
+
+      .progress-bar-inner {
+        width: 0%;
+        height: 100%;
+        background: var(--accent);
+        transition: width 0.3s ease;
       }
     </style>
   </head>
   <body>
-    <h2>ZIP Extractor</h2>
+    <div class="card">
+      <h1>📦 ZIP Extractor</h1>
 
-    <div>
-      <button id="select-input">Select ZIP or Folder</button>
-      <span id="input-path"></span>
-    </div>
-    <div>
-      <button id="select-output">Select Output Folder</button>
-      <span id="output-path"></span>
-    </div>
+      <div>
+        <button id="select-input">Select ZIP or Folder</button>
+        <span class="path-label" id="input-path">No input selected</span>
+      </div>
 
-    <div>
-      <button id="extract">Extract</button>
-    </div>
+      <div>
+        <button id="select-output">Select Output Folder</button>
+        <span class="path-label" id="output-path">No output selected</span>
+      </div>
 
-    <pre id="log"></pre>
+      <div class="progress-bar">
+        <div class="progress-bar-inner" id="progress-bar"></div>
+      </div>
+
+      <button id="extract">Extract Files</button>
+
+      <pre id="log"></pre>
+    </div>
 
     <script>
       const inputBtn = document.getElementById("select-input");
       const outputBtn = document.getElementById("select-output");
       const extractBtn = document.getElementById("extract");
       const logEl = document.getElementById("log");
+      const progressBar = document.getElementById("progress-bar");
 
       let inputPath = "";
       let outputPath = "";
 
+      function log(message) {
+        logEl.textContent += message + "\n";
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
       inputBtn.onclick = async () => {
         inputPath = await window.electronAPI.selectFolder("input");
-        document.getElementById("input-path").innerText = inputPath || "";
+        document.getElementById("input-path").textContent =
+          inputPath || "No input selected";
       };
 
       outputBtn.onclick = async () => {
         outputPath = await window.electronAPI.selectFolder("output");
-        document.getElementById("output-path").innerText = outputPath || "";
+        document.getElementById("output-path").textContent =
+          outputPath || "No output selected";
       };
 
       extractBtn.onclick = async () => {
         if (!inputPath || !outputPath) {
-          logEl.textContent = "⚠️ Please select both input and output paths.";
+          log("⚠️ Please select both input and output paths.");
           return;
         }
 
-        logEl.textContent = "⏳ Extracting...\n";
+        logEl.textContent = "";
+        progressBar.style.width = "0%";
+        log("⏳ Extracting files...");
 
-        const result = await window.electronAPI.extractZips({ inputPath, outputPath });
+        const result = await window.electronAPI.extractZips({
+          inputPath,
+          outputPath,
+        });
+
         if (result.success) {
-          logEl.textContent += result.logs.join("\n");
+          const logs = result.logs;
+          logs.forEach((entry, i) => {
+            setTimeout(() => {
+              log(entry);
+              const percent = ((i + 1) / logs.length) * 100;
+              progressBar.style.width = percent + "%";
+            }, i * 150);
+          });
         } else {
-          logEl.textContent += "❌ Error: " + result.error;
+          log("❌ Error: " + result.error);
+          progressBar.style.background = "red";
         }
       };
     </script>
