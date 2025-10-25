@@ -60,7 +60,7 @@
       }
 
       input[type="text"] {
-        width: calc(100% - 130px);
+        width: calc(100% - 90px);
         padding: 0.8rem;
         border: 1px solid #cbd5e1;
         border-radius: 8px;
@@ -125,6 +125,57 @@
         margin: 0;
         font-size: 0.95rem;
       }
+
+      .selected-items {
+        margin-top: 1rem;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+
+      .selected-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.7rem 1rem;
+        margin-bottom: 0.5rem;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        transition: background 0.2s;
+      }
+
+      .selected-item:hover {
+        background: #f1f5f9;
+      }
+
+      .item-path {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-right: 1rem;
+        color: #475569;
+      }
+
+      .remove-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+        background-color: #ef4444;
+        flex-shrink: 0;
+      }
+
+      .remove-btn:hover {
+        background-color: #dc2626;
+      }
+
+      .empty-state {
+        padding: 1rem;
+        text-align: center;
+        color: #94a3b8;
+        font-size: 0.9rem;
+        font-style: italic;
+      }
     </style>
   </head>
 
@@ -132,15 +183,19 @@
     <div class="card">
       <h1>📦 ZIP Extractor</h1>
 
-      <label>Input ZIP File or Folder:</label>
+      <label>Input ZIP File(s) or Folder:</label>
       <div class="input-row">
         <input
           id="inputPath"
           type="text"
-          placeholder="Select ZIP or folder"
+          placeholder="Select ZIP file(s) or folder"
           disabled
         />
         <button id="browseInput">Browse</button>
+      </div>
+
+      <div id="selectedItemsContainer" class="selected-items" style="display: none;">
+        <div id="selectedItemsList"></div>
       </div>
 
       <label>Output Folder:</label>
@@ -174,10 +229,58 @@
       const extractBtn = document.getElementById("extractBtn");
       const status = document.getElementById("status");
       const keepStructure = document.getElementById("keepStructure");
+      const selectedItemsContainer = document.getElementById("selectedItemsContainer");
+      const selectedItemsList = document.getElementById("selectedItemsList");
+
+      let selectedInputPaths = [];
+
+      function updateSelectedItemsDisplay() {
+        if (selectedInputPaths.length === 0) {
+          selectedItemsContainer.style.display = "none";
+          inputPath.value = "";
+          return;
+        }
+
+        selectedItemsContainer.style.display = "block";
+        selectedItemsList.innerHTML = "";
+
+        selectedInputPaths.forEach((path, index) => {
+          const itemDiv = document.createElement("div");
+          itemDiv.className = "selected-item";
+
+          const pathSpan = document.createElement("span");
+          pathSpan.className = "item-path";
+          pathSpan.textContent = path;
+          pathSpan.title = path; // Show full path on hover
+
+          const removeBtn = document.createElement("button");
+          removeBtn.className = "remove-btn";
+          removeBtn.textContent = "Remove";
+          removeBtn.onclick = () => removeItem(index);
+
+          itemDiv.appendChild(pathSpan);
+          itemDiv.appendChild(removeBtn);
+          selectedItemsList.appendChild(itemDiv);
+        });
+
+        if (selectedInputPaths.length === 1) {
+          inputPath.value = selectedInputPaths[0];
+        } else {
+          inputPath.value = `${selectedInputPaths.length} items selected`;
+        }
+      }
+
+      function removeItem(index) {
+        selectedInputPaths.splice(index, 1);
+        updateSelectedItemsDisplay();
+      }
 
       browseInput.addEventListener("click", async () => {
         const result = await ipcRenderer.invoke("select-input");
-        if (result) inputPath.value = result;
+        if (result) {
+          selectedInputPaths = result;
+          updateSelectedItemsDisplay();
+        }
       });
 
       browseOutput.addEventListener("click", async () => {
@@ -186,24 +289,37 @@
       });
 
       extractBtn.addEventListener("click", async () => {
-        if (!inputPath.value || !outputDir.value) {
+        if (selectedInputPaths.length === 0 || !outputDir.value) {
           status.textContent = "⚠️ Please select both input and output paths.";
           return;
         }
 
         status.textContent = "⏳ Extracting... Please wait.";
 
-        const response = await ipcRenderer.invoke("extract-zips", {
-          inputPath: inputPath.value,
-          outputDir: outputDir.value,
-          keepStructure: keepStructure.checked,
-        });
+        // Process each selected path
+        const allLogs = [];
+        let hasError = false;
+        
+        for (const inputPathValue of selectedInputPaths) {
+          const response = await ipcRenderer.invoke("extract-zips", {
+            inputPath: inputPathValue,
+            outputDir: outputDir.value,
+            keepStructure: keepStructure.checked,
+          });
 
-        if (response.success) {
+          if (response.success) {
+            allLogs.push(...response.logs);
+          } else {
+            allLogs.push(`❌ Error processing ${inputPathValue}: ${response.error}`);
+            hasError = true;
+          }
+        }
+
+        if (!hasError) {
           status.textContent =
-            "✅ Extraction complete!\n\n" + response.logs.join("\n");
+            "✅ Extraction complete!\n\n" + allLogs.join("\n");
         } else {
-          status.textContent = "❌ Extraction failed:\n" + response.error;
+          status.textContent = "⚠️ Extraction completed with errors:\n\n" + allLogs.join("\n");
         }
 
         setTimeout(() => {

@@ -21,10 +21,10 @@ app.whenReady().then(() => {
 
 ipcMain.handle("select-input", async () => {
   const result = await dialog.showOpenDialog({
-    properties: ["openFile", "openDirectory"],
+    properties: ["openFile", "openDirectory", "multiSelections"],
     filters: [{ name: "ZIP Files", extensions: ["zip"] }],
   });
-  return result.canceled ? null : result.filePaths[0];
+  return result.canceled ? null : result.filePaths;
 });
 
 ipcMain.handle("select-output", async () => {
